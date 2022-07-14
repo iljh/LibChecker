@@ -1,6 +1,5 @@
 package com.absinthe.libchecker.ui.detail
 
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Gravity
@@ -33,12 +32,12 @@ import com.absinthe.libchecker.constant.Constants
 import com.absinthe.libchecker.database.Repositories
 import com.absinthe.libchecker.databinding.ActivitySnapshotDetailBinding
 import com.absinthe.libchecker.recyclerview.VerticalSpacesItemDecoration
-import com.absinthe.libchecker.recyclerview.adapter.snapshot.ARROW
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.SnapshotDetailAdapter
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.node.BaseSnapshotNode
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.node.SnapshotComponentNode
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.node.SnapshotNativeNode
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.node.SnapshotTitleNode
+import com.absinthe.libchecker.recyclerview.adapter.snapshot.provider.ARROW
 import com.absinthe.libchecker.ui.app.CheckPackageOnResumingActivity
 import com.absinthe.libchecker.utils.LCAppUtils
 import com.absinthe.libchecker.utils.PackageUtils
@@ -99,7 +98,6 @@ class SnapshotDetailActivity : CheckPackageOnResumingActivity<ActivitySnapshotDe
     return super.onOptionsItemSelected(item)
   }
 
-  @SuppressLint("SetTextI18n")
   private fun initView() {
     setSupportActionBar(binding.toolbar)
     supportActionBar?.apply {

@@ -34,13 +34,14 @@ import com.absinthe.libchecker.LibCheckerApp
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.base.BaseActivity
 import com.absinthe.libchecker.base.BaseAlertDialogBuilder
+import com.absinthe.libchecker.bean.SnapshotDiffItem
+import com.absinthe.libchecker.bean.SnapshotPeriodItem
 import com.absinthe.libchecker.constant.Constants
 import com.absinthe.libchecker.constant.GlobalValues
 import com.absinthe.libchecker.database.AppItemRepository
 import com.absinthe.libchecker.databinding.FragmentSnapshotBinding
 import com.absinthe.libchecker.recyclerview.HorizontalSpacesItemDecoration
 import com.absinthe.libchecker.recyclerview.adapter.snapshot.SnapshotAdapter
-import com.absinthe.libchecker.recyclerview.diff.SnapshotDiffUtil
 import com.absinthe.libchecker.services.IShootService
 import com.absinthe.libchecker.services.OnShootListener
 import com.absinthe.libchecker.services.ShootService
@@ -63,6 +64,7 @@ import com.absinthe.libchecker.view.snapshot.SnapshotEmptyView
 import com.absinthe.libchecker.viewmodel.HomeViewModel
 import com.absinthe.libchecker.viewmodel.SnapshotViewModel
 import com.absinthe.libraries.utils.utils.AntiShakeUtils
+import com.chad.library.adapter.base.entity.node.BaseNode
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.analytics.EventProperties
 import kotlinx.coroutines.Dispatchers
@@ -199,6 +201,7 @@ class SnapshotFragment : BaseListControllerFragment<FragmentSnapshotBinding>() {
     }
 
     adapter.apply {
+      setHasStableIds(true)
       headerWithEmptyEnable = true
       dashboard.also {
         setHeaderView(it)
@@ -216,13 +219,12 @@ class SnapshotFragment : BaseListControllerFragment<FragmentSnapshotBinding>() {
         )
       }
       setEmptyView(emptyView)
-      setDiffCallback(SnapshotDiffUtil())
       setOnItemClickListener { _, view, position ->
         if (AntiShakeUtils.isInvalidClick(view)) {
           return@setOnItemClickListener
         }
 
-        val item = getItem(position)
+        val item = (getItem(position) as? SnapshotDiffItem) ?: return@setOnItemClickListener
         if (item.deleted || item.newInstalled) {
           SnapshotNewOrDeletedBSDFragment.newInstance(item).also {
             it.show(context.supportFragmentManager, it.tag)
@@ -294,10 +296,37 @@ class SnapshotFragment : BaseListControllerFragment<FragmentSnapshotBinding>() {
         }
       }
       snapshotDiffItems.observe(viewLifecycleOwner) { list ->
-        adapter.setDiffNewData(
-          list.sortedByDescending { it.updateTime }
-            .toMutableList()
+        val newList: MutableList<BaseNode> =
+          list.sortedByDescending { it.updateTime }.toMutableList()
+        val current = System.currentTimeMillis()
+        val periodQueue: Queue<Pair<SnapshotPeriodItem.Type, Long>> = LinkedList(
+          listOf(
+            SnapshotPeriodItem.Type.Zero to 0,
+            SnapshotPeriodItem.Type.InFiveMinutes to 5 * 60 * 1000,
+            SnapshotPeriodItem.Type.InOneHour to 60 * 60 * 1000,
+            SnapshotPeriodItem.Type.InEightHours to 8 * 60 * 60 * 1000,
+            SnapshotPeriodItem.Type.InOneDay to 24 * 60 * 60 * 1000,
+            SnapshotPeriodItem.Type.InOneWeek to 7 * 24 * 60 * 60 * 1000,
+            SnapshotPeriodItem.Type.Earlier to 0x11E8F7D4C00 /* 2009-01-01, 00:00:00 */,
+            SnapshotPeriodItem.Type.PreInstalled to Long.MAX_VALUE
+          )
         )
+        var period = periodQueue.poll()!!
+        var next = periodQueue.peek()!!
+        var addedHeader = false
+        list.forEachIndexed { index, snapshotDiffItem ->
+          if (snapshotDiffItem.updateTime in (period.second)..(next.second)) {
+            if (!addedHeader) {
+              newList.add(index, SnapshotPeriodItem(next.first))
+              addedHeader = true
+            }
+          } else {
+            addedHeader = false
+            period = next
+            periodQueue.poll()?.let { next = it }
+          }
+        }
+        adapter.setDiffNewData(newList)
         flip(VF_LIST)
 
         lifecycleScope.launch(Dispatchers.IO) {

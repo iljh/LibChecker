@@ -27,7 +27,7 @@ data class SnapshotDiffItem(
   var newInstalled: Boolean = false,
   var deleted: Boolean = false,
   var isTrackItem: Boolean = false
-) : Serializable {
+) : SnapshotAbsItem(), Serializable {
   @JsonClass(generateAdapter = true)
   data class DiffNode<T>(val old: T, val new: T? = null) : Serializable
 }

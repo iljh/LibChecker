@@ -34,7 +34,7 @@ import com.absinthe.libchecker.database.entity.SnapshotItem
 import com.absinthe.libchecker.database.entity.TimeStampItem
 import com.absinthe.libchecker.protocol.Snapshot
 import com.absinthe.libchecker.protocol.SnapshotList
-import com.absinthe.libchecker.recyclerview.adapter.snapshot.ARROW
+import com.absinthe.libchecker.recyclerview.adapter.snapshot.provider.ARROW
 import com.absinthe.libchecker.utils.PackageUtils
 import com.absinthe.libchecker.utils.PackageUtils.getPermissionsList
 import com.absinthe.libchecker.utils.extensions.sizeToString
